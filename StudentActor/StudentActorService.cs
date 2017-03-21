@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Fabric;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Common.DDD;
 using Microsoft.ServiceFabric.Actors;
 using Microsoft.ServiceFabric.Actors.Runtime;
 using StudentActor.Events;
@@ -23,18 +25,50 @@ namespace StudentActor
         {
         }
 
+        //Note! This just works when having partition key 1. Unless, we need to make sure we call the correct actor service.
         public async Task<Student> GetStudentAsync(Guid studentId, CancellationToken cancellationToken)
         {
-            var state = await StateProvider.LoadStateAsync<EventStream>(
-                new ActorId(studentId),
+            var generator = new StudentReadModelGenerator(this.StateProvider);
+            return await generator.TryGenerateAsync(new ActorId(studentId), cancellationToken);
+        }
+    }
+    
+    public class StudentReadModelGenerator
+    {
+        private readonly IActorStateProvider _stateProvider;
+        private readonly EventDispatcher<IStudentEvent> _eventDispatcher = new EventDispatcher<IStudentEvent>();
+
+        public StudentReadModelGenerator(IActorStateProvider stateProvider)
+        {
+            _stateProvider = stateProvider;
+            _eventDispatcher.RegisterAppliers()
+                .For<IStudentEvent>(e => Model.Id = e.AggregateRootId)
+                .For<IStudentRegisteredEvent>(e => Model.Name = e.Name);
+        }
+
+        public async Task<Student> TryGenerateAsync(ActorId actorId, CancellationToken cancellationToken)
+        {
+            var eventStream = await _stateProvider.LoadStateAsync<EventStream>(
+                actorId,
                 StudentActor.EventStreamKey,
                 cancellationToken);
 
-            return new Student
+            if (!eventStream.DomainEvents.Any())
             {
-                Id = ((IStudentRegisteredEvent) state.DomainEvents[0]).AggregateRootId,
-                Name = ((IStudentRegisteredEvent) state.DomainEvents[0]).Name
-            };
+                return null;
+            }
+
+            var model = new Student();
+            Model = model;
+            foreach (var domainEvent in eventStream.DomainEvents)
+            {
+                _eventDispatcher.Dispatch(domainEvent as IStudentEvent);
+            }
+            var result = Model;
+            Model = null;
+            return result;
         }
+
+        public Student Model { get; set; }
     }
 }

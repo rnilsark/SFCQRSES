@@ -1,19 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Common.DDD;
+﻿using Common.DDD;
+using StudentActor.Domain;
 
 namespace StudentActor.Events
 {
     public interface IStudentEvent : IAggregateRootEvent
     {
-
     }
 
     public interface IStudentRegisteredEvent : IStudentEvent, IAggregateRootCreatedEvent
     {
         string Name { get; set; }
+    }
+
+    public interface ISubjectAddedEvent : IStudentEvent
+    {
+        string Name { get; set; }
+        Level Level { get; set; }
     }
 }

@@ -78,9 +78,11 @@
     <Reference Include="System.Runtime.Serialization" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Domain\Level.cs" />
     <Compile Include="Domain\Student.cs" />
+    <Compile Include="Domain\Subject.cs" />
     <Compile Include="Events\EventStream.cs" />
-    <Compile Include="Events\Implementation\StudentRegisteredEvent.cs" />
+    <Compile Include="Events\Implementation\StudentEvent.cs" />
     <Compile Include="Events\IStudentEvent.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="StudentActorService.cs" />

@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using Common.DDD;
 using StudentActor.Events;
 using StudentActor.Events.Implementation;
@@ -10,10 +12,12 @@ namespace StudentActor.Domain
         public Student()
         {
             RegisterEventAppliers()
-                .For<IStudentRegisteredEvent>(e => Name = e.Name);
+                .For<IStudentRegisteredEvent>(e => Name = e.Name)
+                .For<ISubjectAddedEvent>(e => Subjects.Add(Subject.Create(e.Name, e.Level)));
         }
 
         public string Name { get; set; }
+        public IList<Subject> Subjects {get; set; } = new List<Subject>();
 
         public void Register(Guid studentId, string name)
         {
@@ -27,6 +31,11 @@ namespace StudentActor.Domain
                 AggregateRootId = studentId,
                 Name = name
             });
+        }
+
+        public void AddSubject(Subject subject)
+        {
+            RaiseEvent(new SubjectAddedEvent(subject));
         }
     }
 }
