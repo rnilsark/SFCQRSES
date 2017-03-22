@@ -6,12 +6,14 @@ using Microsoft.ServiceFabric.Actors.Runtime;
 using StudentActor.Events;
 using StudentActor.Events.Implementation;
 using StudentActor.Interfaces;
+using StudentActor.Mapping;
 using Student = StudentActor.Domain.Student;
 
 namespace StudentActor
 {
     [StatePersistence(StatePersistence.Persisted)]
-    internal class StudentActor : EventStoredActorBase<Student, EventStream>, IStudentActor, IHandleDomainEvent<StudentRegisteredEvent>
+    internal class StudentActor : EventStoredActorBase<Student, EventStream>, IStudentActor,
+        IHandleDomainEvent<StudentRegisteredEvent>
     {
         public StudentActor(ActorService actorService, ActorId actorId)
             : base(actorService, actorId)
@@ -20,7 +22,11 @@ namespace StudentActor
 
         public Task RegisterAsync(RegisterCommand command)
         {
-            return Task.Run(() => DomainState.Register(this.GetActorId().GetGuidId(), command.Name, null));
+            return
+                Task.Run(
+                    () =>
+                        DomainState.Register(this.GetActorId().GetGuidId(), command.Name,
+                            command.Address.ToDomainModel()));
         }
 
         protected override async Task OnActivateAsync()

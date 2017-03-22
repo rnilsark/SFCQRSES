@@ -63,13 +63,23 @@ namespace WebApi.Controllers
         }
 
         [HttpPost]
-        public async Task Post(int number)
+        public async Task<IEnumerable<Guid>>  Post(int numberOfStudents)
         {
-            for (var i = 0; i < number; i++)
+            var ids = new List<Guid>();
+            for (var i = 0; i < numberOfStudents; i++)
             {
-                var proxy = _actorProxyFactory.CreateActorProxy<IStudentActor>(new ActorId(Guid.NewGuid()));
-                await proxy.RegisterAsync(new RegisterCommand { Name = "Person" + i });
+                var id = Guid.NewGuid();
+                ids.Add(id);
+
+                var proxy = _actorProxyFactory.CreateActorProxy<IStudentActor>(new ActorId(id));
+                await proxy.RegisterAsync(new RegisterCommand
+                {
+                    Name = "Person" + i,
+                    Address = new Address { Street = "Street" + i, ZipCode = "ZipCode" + i, City = "City" + i}
+                });
             }
+
+            return ids;
         }
     }
 }
