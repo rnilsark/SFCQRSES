@@ -7,14 +7,16 @@ namespace StudentActor.Events
     {
     }
 
-    public interface IStudentRegisteredEvent : IStudentEvent, IAggregateRootCreatedEvent
+    public interface IStudentRegisteredEvent : IStudentEvent, IAggregateRootCreatedEvent, IStudentAddressChangedEvent
     {
         string Name { get; set; }
     }
 
-    public interface ISubjectAddedEvent : IStudentEvent
+    public interface IStudentAddressChangedEvent : IStudentEvent
     {
-        string Name { get; set; }
-        Level Level { get; set; }
+        string Street { get; set; }
+        string ZipCode { get; set; }
+        string City { get; set; }
     }
+    
 }

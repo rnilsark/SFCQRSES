@@ -45,5 +45,6 @@ namespace Common.ServiceFabric.Extensions.Actors.Runtime
 
             await handleDomainEvent.Handle(domainEvent);
         }
+
     }
 }

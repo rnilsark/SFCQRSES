@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Fabric;
+using System.Fabric.Query;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Web.Http;
@@ -17,29 +18,58 @@ namespace WebApi.Controllers
     {
         private readonly ActorProxyFactory _actorProxyFactory;
         private readonly ServiceProxyFactory _serviceProxyFactory;
+        private static readonly FabricClient FabricClient = new FabricClient();
+        private readonly Uri _serviceUri;
 
         public StudentsController()
         {
             _actorProxyFactory = new ActorProxyFactory();
             _serviceProxyFactory = new ServiceProxyFactory();
+            _serviceUri = new Uri($@"{FabricRuntime.GetActivationContext().ApplicationName}/{"StudentActorService"}");
         }
 
         [HttpGet]
         public async Task<Student> Get(Guid id)
         {
-            var proxy = _serviceProxyFactory.CreateServiceProxy<IStudentActorService>(
-                new Uri($@"{FabricRuntime.GetActivationContext().ApplicationName}/{"StudentActorService"}"), new ServicePartitionKey(1));
+            var proxy = _actorProxyFactory.CreateActorServiceProxy<IStudentActorService>(
+                _serviceUri, new ActorId(id));
 
-            var state = await proxy.GetStudentAsync(id, CancellationToken.None);
+            var student = await proxy.GetStudentAsync(id, CancellationToken.None);
 
-            return state;
+            return student;
+        }
+
+        [HttpGet]
+        public async Task<IEnumerable<Student>> Get()
+        {
+            var students = new List<Student>();
+
+            var partitions = await FabricClient.QueryManager.GetPartitionListAsync(_serviceUri);
+
+            foreach (var p in partitions)
+            {
+                // ReSharper disable once PossibleNullReferenceException
+                var minKey = (p.PartitionInformation as Int64RangePartitionInformation).LowKey;
+                var proxy = _serviceProxyFactory.CreateServiceProxy<IStudentActorService>(_serviceUri, new ServicePartitionKey(minKey));
+
+                var result = await proxy.GetStudentsAsync(CancellationToken.None);
+                if (result != null)
+                {
+                    students.AddRange(result);
+                }
+            }
+
+            return students;
         }
 
         [HttpPost]
-        public async Task Post()
+        public async Task Post(int number)
         {
-            var proxy = _actorProxyFactory.CreateActorProxy<IStudentActor>(new ActorId(Guid.Parse("F1DEEC4E-AFAE-439A-8976-0BE1F40BF0C2")));
-            await proxy.RegisterAsync(new RegisterCommand { Name = "Kalle"});
+            for (var i = 0; i < number; i++)
+            {
+                var proxy = _actorProxyFactory.CreateActorProxy<IStudentActor>(new ActorId(Guid.NewGuid()));
+                await proxy.RegisterAsync(new RegisterCommand { Name = "Person" + i });
+            }
         }
     }
 }

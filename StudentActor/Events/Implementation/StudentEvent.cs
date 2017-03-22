@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Runtime.Serialization;
 using Common.DDD;
-using StudentActor.Domain;
 
 namespace StudentActor.Events.Implementation
 {
@@ -17,20 +16,27 @@ namespace StudentActor.Events.Implementation
     {
         [DataMember]
         public string Name { get; set; }
+
+        [DataMember]
+        public string Street { get; set; }
+
+        [DataMember]
+        public string ZipCode { get; set; }
+
+        [DataMember]
+        public string City { get; set; }
     }
 
     [DataContract]
-    public class SubjectAddedEvent : StudentEvent, ISubjectAddedEvent
+    public class StudentAddressChangedEvent : StudentEvent, IStudentAddressChangedEvent
     {
-        public SubjectAddedEvent(Subject subject)
-        {
-            Name = subject.Name;
-            Level = subject.Level;
-        }
+        [DataMember]
+        public string Street { get; set; }
 
         [DataMember]
-        public string Name { get; set; }
+        public string ZipCode { get; set; }
+
         [DataMember]
-        public Level Level { get; set; }
+        public string City { get; set; }
     }
 }

@@ -1,18 +1,20 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Fabric;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Common.DDD;
 using Microsoft.ServiceFabric.Actors;
+using Microsoft.ServiceFabric.Actors.Query;
 using Microsoft.ServiceFabric.Actors.Runtime;
-using StudentActor.Events;
 using StudentActor.Interfaces;
+using StudentActor.Services;
 
 namespace StudentActor
 {
     internal class StudentActorService : ActorService, IStudentActorService
     {
+        private readonly ActorEventStreamReader _eventStreamReader;
+
         public StudentActorService
         (
             StatefulServiceContext context,
@@ -23,52 +25,36 @@ namespace StudentActor
             ActorServiceSettings settings = null) :
             base(context, actorTypeInfo, actorFactory, stateManagerFactory, stateProvider, settings)
         {
+            _eventStreamReader = new ActorEventStreamReader(StateProvider, StudentActor.EventStreamKey);
         }
 
-        //Note! This just works when having partition key 1. Unless, we need to make sure we call the correct actor service.
         public async Task<Student> GetStudentAsync(Guid studentId, CancellationToken cancellationToken)
         {
-            var generator = new StudentReadModelGenerator(this.StateProvider);
-            return await generator.TryGenerateAsync(new ActorId(studentId), cancellationToken);
-        }
-    }
-    
-    public class StudentReadModelGenerator
-    {
-        private readonly IActorStateProvider _stateProvider;
-        private readonly EventDispatcher<IStudentEvent> _eventDispatcher = new EventDispatcher<IStudentEvent>();
-
-        public StudentReadModelGenerator(IActorStateProvider stateProvider)
-        {
-            _stateProvider = stateProvider;
-            _eventDispatcher.RegisterAppliers()
-                .For<IStudentEvent>(e => Model.Id = e.AggregateRootId)
-                .For<IStudentRegisteredEvent>(e => Model.Name = e.Name);
-        }
-
-        public async Task<Student> TryGenerateAsync(ActorId actorId, CancellationToken cancellationToken)
-        {
-            var eventStream = await _stateProvider.LoadStateAsync<EventStream>(
-                actorId,
-                StudentActor.EventStreamKey,
-                cancellationToken);
-
-            if (!eventStream.DomainEvents.Any())
+            using (var generator = new StudentReadModelGenerator(_eventStreamReader))
             {
-                return null;
+                return await generator.TryGenerateAsync(studentId, cancellationToken);
             }
-
-            var model = new Student();
-            Model = model;
-            foreach (var domainEvent in eventStream.DomainEvents)
-            {
-                _eventDispatcher.Dispatch(domainEvent as IStudentEvent);
-            }
-            var result = Model;
-            Model = null;
-            return result;
         }
 
-        public Student Model { get; set; }
+        public async Task<IEnumerable<Student>> GetStudentsAsync(CancellationToken cancellationToken)
+        {
+            ContinuationToken continuationToken = null;
+            var students = new List<Student>();
+
+            do
+            {
+                var page = await StateProvider.GetActorsAsync(100, continuationToken, cancellationToken);
+
+                foreach (var actorId in page.Items)
+                {
+                    var generator = new StudentReadModelGenerator(_eventStreamReader);
+                    students.Add(await generator.TryGenerateAsync(actorId.GetGuidId(), cancellationToken));
+                }
+
+                continuationToken = page.ContinuationToken;
+            } while (continuationToken != null);
+
+            return students;
+        }
     }
 }

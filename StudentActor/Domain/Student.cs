@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
 using Common.DDD;
 using StudentActor.Events;
 using StudentActor.Events.Implementation;
@@ -12,30 +10,47 @@ namespace StudentActor.Domain
         public Student()
         {
             RegisterEventAppliers()
-                .For<IStudentRegisteredEvent>(e => Name = e.Name)
-                .For<ISubjectAddedEvent>(e => Subjects.Add(Subject.Create(e.Name, e.Level)));
+                .For<IStudentRegisteredEvent>(Apply)
+                .For<IStudentAddressChangedEvent>(Apply);
         }
 
-        public string Name { get; set; }
-        public IList<Subject> Subjects {get; set; } = new List<Subject>();
+        private void Apply(IStudentRegisteredEvent @event)
+        {
+            Name = @event.Name;
+        }
 
-        public void Register(Guid studentId, string name)
+        private void Apply(IStudentAddressChangedEvent @event)
+        {
+            Address = Address.Create(@event.Street, @event.ZipCode, @event.City);
+        }
+        
+        public string Name { get; set; }
+        public Address Address { get; set; }
+
+
+        public void Register(Guid studentId, string name, Address address)
         {
             if (name.Length < 5)
-            {
                 throw new ArgumentException("Name should be at least 5 characters.");
-            }
-            
+
             RaiseEvent(new StudentRegisteredEvent
             {
                 AggregateRootId = studentId,
-                Name = name
+                Name = name,
+                Street = address.Street,
+                ZipCode = address.ZipCode,
+                City = address.City
             });
         }
 
-        public void AddSubject(Subject subject)
+        public void EditAddress(Address address)
         {
-            RaiseEvent(new SubjectAddedEvent(subject));
+            RaiseEvent(new StudentAddressChangedEvent
+            {
+                Street = address.Street,
+                ZipCode = address.ZipCode,
+                City = address.City
+            });
         }
     }
 }

@@ -20,7 +20,7 @@ namespace StudentActor
 
         public Task RegisterAsync(RegisterCommand command)
         {
-            return Task.Run(() => DomainState.Register(this.GetActorId().GetGuidId(), command.Name));
+            return Task.Run(() => DomainState.Register(this.GetActorId().GetGuidId(), command.Name, null));
         }
 
         protected override async Task OnActivateAsync()

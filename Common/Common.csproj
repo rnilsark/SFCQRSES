@@ -77,6 +77,7 @@
   <ItemGroup>
     <Compile Include="CQRS\CommandBase.cs" />
     <Compile Include="CQRS\ICommand.cs" />
+    <Compile Include="CQRS\ReadModelGenerator.cs" />
     <Compile Include="DDD\AggregateRootException.cs" />
     <Compile Include="DDD\AggregateRoot.Component.cs" />
     <Compile Include="DDD\AggregateRoot.cs" />
@@ -89,6 +90,7 @@
     <Compile Include="DDD\IDomainEvent.cs" />
     <Compile Include="DDD\IEventController.cs" />
     <Compile Include="DDD\IEventStream.cs" />
+    <Compile Include="DDD\IEventStreamReader.cs" />
     <Compile Include="DDD\IHandleDomainEvent.cs" />
     <Compile Include="DDD\InvariantsNotMetException.cs" />
     <Compile Include="DDD\ValueObject.cs" />
