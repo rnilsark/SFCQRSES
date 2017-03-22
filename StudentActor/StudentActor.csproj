@@ -79,8 +79,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ActorEventStreamReader.cs" />
+    <Compile Include="Domain\Subject.cs" />
     <Compile Include="Domain\Student.cs" />
     <Compile Include="Domain\Address.cs" />
+    <Compile Include="Domain\Student.Enrollment.cs" />
     <Compile Include="Events\EventStream.cs" />
     <Compile Include="Events\Implementation\StudentEvent.cs" />
     <Compile Include="Events\IStudentEvent.cs" />

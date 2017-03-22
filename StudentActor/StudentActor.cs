@@ -22,11 +22,10 @@ namespace StudentActor
 
         public Task RegisterAsync(RegisterCommand command)
         {
-            return
-                Task.Run(
-                    () =>
-                        DomainState.Register(this.GetActorId().GetGuidId(), command.Name,
-                            command.Address.ToDomainModel()));
+            DomainState.Register(this.GetActorId().GetGuidId(), command.Name,
+                command.Address.ToDomainModel(), command.Subject.ToDomainModel());
+
+            return Task.FromResult(true);
         }
 
         protected override async Task OnActivateAsync()

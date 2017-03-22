@@ -12,7 +12,8 @@ namespace StudentActor.Services
             RegisterEventAppliers()
                 .For<IStudentEvent>(e => ReadModel.Id = e.AggregateRootId)
                 .For<IStudentRegisteredEvent>(e => ReadModel.Name = e.Name)
-                .For<IStudentAddressChangedEvent>(e => ReadModel.Address = new Address {Street = e.Street, ZipCode = e.ZipCode, City = e.City});
+                .For<IStudentEnrolledEvent>(e => ReadModel.Subjects.Add((Subject)e.Subject))
+                .For<IAddressChangedEvent>(e => ReadModel.Address = new Address {Street = e.Street, ZipCode = e.ZipCode, City = e.City});
         }
     }
 }

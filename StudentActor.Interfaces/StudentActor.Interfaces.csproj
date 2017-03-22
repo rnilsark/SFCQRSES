@@ -69,6 +69,7 @@
     <Reference Include="System.Runtime.Serialization" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Subject.cs" />
     <Compile Include="IStudentActorService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="IStudentActor.cs" />

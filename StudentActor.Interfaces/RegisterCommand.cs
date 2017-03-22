@@ -11,5 +11,8 @@ namespace StudentActor.Interfaces
 
         [DataMember]
         public Address Address { get; set; }
+
+        [DataMember]
+        public Subject Subject { get; set; }
     }
 }

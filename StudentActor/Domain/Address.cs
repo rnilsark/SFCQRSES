@@ -35,10 +35,5 @@ namespace StudentActor.Domain
 
             return new Address(street, zipCode, city);
         }
-
-        public override string ToString()
-        {
-            return $"{Street} {ZipCode} {City}";
-        }
     }
 }

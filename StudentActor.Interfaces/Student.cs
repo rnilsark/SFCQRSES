@@ -15,6 +15,9 @@ namespace StudentActor.Interfaces
 
         [DataMember]
         public Address Address { get; set; }
+
+        [DataMember]
+        public List<Subject> Subjects { get; set; } = new List<Subject>();
     }
 
     [DataContract]
@@ -30,5 +33,5 @@ namespace StudentActor.Interfaces
         public string City { get; set; }
 
     }
-
+    
 }

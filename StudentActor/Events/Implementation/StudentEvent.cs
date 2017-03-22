@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Runtime.Serialization;
 using Common.DDD;
+using StudentActor.Domain;
 
 namespace StudentActor.Events.Implementation
 {
@@ -12,7 +13,26 @@ namespace StudentActor.Events.Implementation
     }
 
     [DataContract]
-    public class StudentRegisteredEvent : StudentEvent, IStudentRegisteredEvent
+    public class AddressChangedEvent : StudentEvent, IAddressChangedEvent
+    {
+        [DataMember]
+        public string Street { get; set; }
+
+        [DataMember]
+        public string ZipCode { get; set; }
+
+        [DataMember]
+        public string City { get; set; }
+    }
+
+    [DataContract]
+    public abstract class EnrollmentEvent : StudentEvent
+    {
+        public int EnrollmentId { get; set; }
+    }
+
+    [DataContract]
+    public class StudentRegisteredEvent : EnrollmentEvent, IStudentRegisteredEvent
     {
         [DataMember]
         public string Name { get; set; }
@@ -25,18 +45,8 @@ namespace StudentActor.Events.Implementation
 
         [DataMember]
         public string City { get; set; }
-    }
-
-    [DataContract]
-    public class StudentAddressChangedEvent : StudentEvent, IStudentAddressChangedEvent
-    {
-        [DataMember]
-        public string Street { get; set; }
 
         [DataMember]
-        public string ZipCode { get; set; }
-
-        [DataMember]
-        public string City { get; set; }
+        public Subject Subject { get; set; }
     }
 }

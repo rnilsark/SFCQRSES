@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Fabric;
 using System.Fabric.Query;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Web.Http;
@@ -62,24 +63,92 @@ namespace WebApi.Controllers
             return students;
         }
 
-        [HttpPost]
-        public async Task<IEnumerable<Guid>>  Post(int numberOfStudents)
+        [HttpGet]
+        public async Task<IEnumerable<Student>> Get(string subject)
         {
-            var ids = new List<Guid>();
-            for (var i = 0; i < numberOfStudents; i++)
-            {
-                var id = Guid.NewGuid();
-                ids.Add(id);
+            var students = new List<Student>();
 
-                var proxy = _actorProxyFactory.CreateActorProxy<IStudentActor>(new ActorId(id));
-                await proxy.RegisterAsync(new RegisterCommand
+            Enum.TryParse(subject, out Subject subjectEnum);
+
+            var partitions = await FabricClient.QueryManager.GetPartitionListAsync(_serviceUri);
+
+            foreach (var p in partitions)
+            {
+                // ReSharper disable once PossibleNullReferenceException
+                var minKey = (p.PartitionInformation as Int64RangePartitionInformation).LowKey;
+                var proxy = _serviceProxyFactory.CreateServiceProxy<IStudentActorService>(_serviceUri, new ServicePartitionKey(minKey));
+                
+                var result = await proxy.GetStudentsBySubjectAsync(subjectEnum,  CancellationToken.None);
+                if (result != null)
                 {
-                    Name = "Person" + i,
-                    Address = new Address { Street = "Street" + i, ZipCode = "ZipCode" + i, City = "City" + i}
-                });
+                    students.AddRange(result);
+                }
             }
 
-            return ids;
+            return students;
+        }
+
+        [HttpPost]
+        public async Task<IEnumerable<RandomStudent>>  Post(int numberOfStudents)
+        {
+            var tasks = new List<Task<RandomStudent>>();
+            for (var i = 0; i < numberOfStudents; i++)
+            {
+                tasks.Add(RegisterStudent());
+            }
+
+            var result = await Task.WhenAll(tasks);
+
+            return result;
+        }
+
+        private async Task<RandomStudent> RegisterStudent()
+        {
+            var student = new RandomStudent();
+            var proxy = _actorProxyFactory.CreateActorProxy<IStudentActor>(new ActorId(student.Id));
+            await proxy.RegisterAsync(new RegisterCommand
+            {
+                Name = student.Name,
+                Address = new Address { Street = RandomString(5), ZipCode = RandomStringNumber(5), City = RandomString(5) },
+                Subject = student.Subject
+            });
+
+            return student;
+        }
+
+        public class RandomStudent
+        {
+            public RandomStudent()
+            {
+                Id = Guid.NewGuid();
+                Name = RandomString(8);
+                Subject = RandomSubject();
+            }
+            public Guid Id { get; }
+            public string Name { get; set; }
+            public Subject Subject { get; set; }
+        }
+
+        private static readonly Random _random = new Random();
+        
+        public static string RandomString(int length)
+        {
+            const string chars = "abcdefghijklmnopqrstuvwxy";
+            return new string(Enumerable.Repeat(chars, length)
+              .Select(s => s[_random.Next(s.Length)]).ToArray());
+        }
+
+        public static string RandomStringNumber(int length)
+        {
+            const string chars = "1234567890";
+            return new string(Enumerable.Repeat(chars, length)
+              .Select(s => s[_random.Next(s.Length)]).ToArray());
+        }
+
+        public static Subject RandomSubject()
+        {
+            var  subjects = new List<Subject> { Subject.Math, Subject.Physics, Subject.Language, Subject.IT };
+            return subjects[_random.Next(subjects.Count)];
         }
     }
 }
