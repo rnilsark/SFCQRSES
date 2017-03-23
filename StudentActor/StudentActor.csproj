@@ -78,7 +78,7 @@
     <Reference Include="System.Runtime.Serialization" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ActorEventStreamReader.cs" />
+    <Compile Include="ActorStateProviderEventStreamReader.cs" />
     <Compile Include="Domain\Subject.cs" />
     <Compile Include="Domain\Student.cs" />
     <Compile Include="Domain\Address.cs" />
@@ -93,6 +93,7 @@
     <Compile Include="Program.cs" />
     <Compile Include="ActorEventSource.cs" />
     <Compile Include="Services\StudentReadModelGenerator.cs" />
+    <Compile Include="StudentReadService.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="PackageRoot\ServiceManifest.xml" />

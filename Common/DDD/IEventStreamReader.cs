@@ -6,6 +6,6 @@ namespace Common.DDD
 {
     public interface IEventStreamReader
     {
-        Task<IDomainEvent[]> GetEventStream(Guid id, CancellationToken cancellationToke);
+        Task<IDomainEvent[]> GetEventStream(Guid id, CancellationToken cancellationToken);
     }
 }

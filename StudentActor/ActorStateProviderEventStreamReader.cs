@@ -9,12 +9,12 @@ using StudentActor.Events;
 
 namespace StudentActor
 {
-    public class ActorEventStreamReader : IEventStreamReader
+    public class ActorStateProviderEventStreamReader : IEventStreamReader
     {
         private readonly IActorStateProvider _stateProvider;
         private readonly string _stateKey;
 
-        public ActorEventStreamReader(IActorStateProvider stateProvider, string stateKey)
+        public ActorStateProviderEventStreamReader(IActorStateProvider stateProvider, string stateKey)
         {
             _stateProvider = stateProvider;
             _stateKey = stateKey;

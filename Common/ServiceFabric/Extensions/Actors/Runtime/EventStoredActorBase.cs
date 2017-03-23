@@ -10,7 +10,7 @@ namespace Common.ServiceFabric.Extensions.Actors.Runtime
         where TDomainEventStream : IEventStream, new()
         where TDomainAggregateRoot : class, IAggregateRoot, new()
     {
-        public const string EventStreamKey = @"event_stream";
+        public const string EventStreamStateKey = @"__event_stream";
         protected TDomainAggregateRoot DomainState = null;
 
         protected EventStoredActorBase(ActorService actorService, ActorId actorId) : base(actorService, actorId)
@@ -21,7 +21,7 @@ namespace Common.ServiceFabric.Extensions.Actors.Runtime
         {
             if (DomainState != null) return await Task.FromResult(DomainState);
 
-            var eventStream = await this.StateManager.GetOrAddStateAsync<TDomainEventStream>(EventStreamKey, new TDomainEventStream());
+            var eventStream = await this.StateManager.GetOrAddStateAsync<TDomainEventStream>(EventStreamStateKey, new TDomainEventStream());
             DomainState = new TDomainAggregateRoot();
             DomainState.Initialize(this, eventStream.DomainEvents);
             return DomainState;
@@ -29,9 +29,9 @@ namespace Common.ServiceFabric.Extensions.Actors.Runtime
         
         protected async Task StoreDomainEventAsync(IDomainEvent domainEvent)
         {
-            var eventStream = await StateManager.GetOrAddStateAsync<TDomainEventStream>(EventStreamKey, new TDomainEventStream());
+            var eventStream = await StateManager.GetOrAddStateAsync<TDomainEventStream>(EventStreamStateKey, new TDomainEventStream());
             eventStream.Append(domainEvent);
-            await StateManager.SetStateAsync(EventStreamKey, eventStream);
+            await StateManager.SetStateAsync(EventStreamStateKey, eventStream);
         }
 
         public async Task RaiseDomainEvent<TDomainEvent>(TDomainEvent domainEvent) where TDomainEvent : IDomainEvent
