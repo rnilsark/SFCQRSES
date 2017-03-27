@@ -3,7 +3,6 @@ using Common.DDD;
 using Common.ServiceFabric.Extensions.Actors.Runtime;
 using Microsoft.ServiceFabric.Actors;
 using Microsoft.ServiceFabric.Actors.Runtime;
-using StudentActor.Domain;
 using StudentActor.Events;
 using StudentActor.Events.Implementation;
 using StudentActor.Interfaces;
@@ -16,15 +15,22 @@ namespace StudentActor
     internal class StudentActor : EventStoredActorBase<Student, EventStream>, IStudentActor,
         IHandleDomainEvent<StudentRegisteredEvent>
     {
-        private readonly StudentActorService _actorService;
         public const string ForeignKeysStateKey = @"__fk";
+        private readonly StudentActorService _actorService;
 
         public StudentActor(StudentActorService actorService, ActorId actorId)
             : base(actorService, actorId)
         {
             _actorService = actorService;
         }
-        
+
+        public async Task Handle(StudentRegisteredEvent domainEvent)
+        {
+            //todo: would be nice to combine these. 
+            await StoreDomainEventAsync(domainEvent);
+            await _actorService.Publish(domainEvent);
+        }
+
         public Task RegisterAsync(RegisterCommand command)
         {
             DomainState.Register(this.GetActorId().GetGuidId(), command.Name,
@@ -37,12 +43,6 @@ namespace StudentActor
         {
             ActorEventSource.Current.ActorMessage(this, "Actor activated.");
             await GetAndSetDomainAsync();
-        }
-
-        public async Task Handle(StudentRegisteredEvent domainEvent)
-        {
-            await StoreDomainEventAsync(domainEvent);
-            await _actorService.Publish(domainEvent);
         }
     }
 }

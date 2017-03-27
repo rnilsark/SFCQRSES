@@ -15,7 +15,6 @@
         </Extension>
       </Extensions>
     </StatefulServiceType>
-    <StatefulServiceType ServiceTypeName="StudentReadServiceType" HasPersistedState="true" />
   </ServiceTypes>
   <CodePackage Name="Code" Version="1.0.0">
     <EntryPoint>
@@ -29,7 +28,6 @@
     <Endpoints>
       <Endpoint Name="StudentActorServiceEndpoint" />
       <Endpoint Name="StudentActorServiceReplicatorEndpoint" />
-      <Endpoint Name="StudentReadServiceEndpoint" />
     </Endpoints>
   </Resources>
   <!-- The content will be generated during build -->

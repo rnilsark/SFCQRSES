@@ -10,6 +10,7 @@ using Microsoft.ServiceFabric.Actors;
 using Microsoft.ServiceFabric.Actors.Query;
 using Microsoft.ServiceFabric.Actors.Runtime;
 using StudentActor.Events;
+using StudentActor.Events.Implementation;
 using StudentActor.Interfaces;
 using StudentActor.Services;
 using Student = StudentActor.Interfaces.Student;
@@ -18,7 +19,7 @@ using Subject = StudentActor.Interfaces.Subject;
 namespace StudentActor
 {
 
-    internal class StudentActorService : ActorService, IStudentActorService
+    internal class StudentActorService : ActorService, IStudentActorService, IHandleDomainEvent<StudentRegisteredEvent>
     {
         private readonly ActorStateProviderEventStreamReader _stateProviderEventStreamReader;
 
@@ -58,11 +59,15 @@ namespace StudentActor
            
         }
         
-        internal Task Publish(IStudentEvent domainEvent)
+        internal async Task Publish<TDomainEvent>(TDomainEvent domainEvent) where TDomainEvent : IDomainEvent
         {
-            //Here we could have event handlers, possibly.
-            _cache.AddOrUpdate(domainEvent.AggregateRootId, new object(), (id, o) => o);
-            return Task.FromResult(true);
+            var handleDomainEvent = this as IHandleDomainEvent<TDomainEvent>;
+            if (handleDomainEvent != null)
+            {
+                await handleDomainEvent.Handle(domainEvent);
+            }
+
+            //Here we could map it to a general "StudentChangedEvent" and include the complete readmodel for any consumers and publish on a service bus.
         }
 
         public Task<Student> GetStudentAsync(Guid studentId, CancellationToken cancellationToken)
@@ -75,30 +80,29 @@ namespace StudentActor
             return student;
         }
 
+        public async Task<IEnumerable<Student>> GetStudentsWithIdCacheAsync(CancellationToken cancellationToken)
+        {
+            var tasks = _cache.Select(kvp => GetStudentAsync(kvp.Key, cancellationToken));
+            return (await Task.WhenAll(tasks));
+        }
+
         public async Task<IEnumerable<Student>> GetStudentsAsync(CancellationToken cancellationToken)
         {
+            var ids = new List<Guid>();
             ContinuationToken continuationToken = null;
-            var students = new List<Student>();
-
             do
             {
-                var page = await 
-                    StateProvider.GetActorsAsync(100, continuationToken, cancellationToken);
+                var page = await StateProvider.GetActorsAsync(int.MaxValue, continuationToken, cancellationToken);
 
-                foreach (var actorId in page.Items)
-                {
-                    using (var generator = new StudentReadModelGenerator(_stateProviderEventStreamReader))
-                    {
-                        students.Add(await generator.TryGenerateAsync(actorId.GetGuidId(), cancellationToken));
-                    }
-                }
+                ids.AddRange(page.Items.Select(actorId => actorId.GetGuidId()));
 
                 continuationToken = page.ContinuationToken;
             } while (continuationToken != null);
 
-            return students;
+            var tasks = ids.Select(id => GetStudentAsync(id, cancellationToken));
+            return await Task.WhenAll(tasks);
         }
-        
+
         public async Task<IEnumerable<Student>> GetStudentsBySubjectAsync(Subject subject,
             CancellationToken cancellationToken)
         {
@@ -126,6 +130,12 @@ namespace StudentActor
             } while (continuationToken != null);
 
             return ids;
+        }
+
+        public Task Handle(StudentRegisteredEvent domainEvent)
+        {
+            _cache.AddOrUpdate(domainEvent.AggregateRootId, new object(), (id, o) => o);
+            return Task.FromResult(true);
         }
     }
 }

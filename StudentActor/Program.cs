@@ -13,10 +13,7 @@ namespace StudentActor
             {
                 ActorRuntime.RegisterActorAsync<StudentActor>(
                     (context, actorType) => new StudentActorService(context, actorType)).GetAwaiter().GetResult();
-
-                ServiceRuntime.RegisterServiceAsync("StudentReadServiceType",
-                    context => new StudentReadService(context)).GetAwaiter().GetResult();
-
+                
                 Thread.Sleep(Timeout.Infinite);
             }
             catch (Exception e)

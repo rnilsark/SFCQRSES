@@ -42,7 +42,7 @@ namespace WebApi.Controllers
         }
 
         [HttpGet]
-        public async Task<IEnumerable<Student>> Get()
+        public async Task<IEnumerable<Student>> Get(bool useCache)
         {
             var students = new List<Student>();
 
@@ -55,7 +55,16 @@ namespace WebApi.Controllers
                 var proxy = _serviceProxyFactory.CreateServiceProxy<IStudentActorService>(_actorServiceUri,
                     new ServicePartitionKey(minKey));
 
-                var result = await proxy.GetStudentsAsync(CancellationToken.None);
+                IEnumerable<Student> result;
+                if (useCache)
+                {
+                    result = await proxy.GetStudentsWithIdCacheAsync(CancellationToken.None);
+                }
+                else
+                {
+                    result = await proxy.GetStudentsAsync(CancellationToken.None);
+                }
+                
                 if (result != null)
                     students.AddRange(result);
             }
@@ -112,6 +121,8 @@ namespace WebApi.Controllers
             return student;
         }
 
+        #region Random test data generators
+
         public static string RandomString(int length)
         {
             const string chars = "abcdefghijklmnopqrstuvwxy";
@@ -145,5 +156,7 @@ namespace WebApi.Controllers
             public string Name { get; set; }
             public Subject Subject { get; set; }
         }
+
+    #endregion
     }
 }

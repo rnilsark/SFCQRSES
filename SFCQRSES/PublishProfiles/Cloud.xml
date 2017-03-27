@@ -20,6 +20,15 @@
                                     AzureActiveDirectory="true"
                                     ServerCertThumbprint="0123456789012345678901234567890123456789" />
   -->
-  <ClusterConnectionParameters ConnectionEndpoint="" />
+  <ClusterConnectionParameters
+     ConnectionEndpoint="ce-dev1-fabric.westeurope.cloudapp.azure.com:19000"
+     X509Credential="true" ServerCertThumbprint="FB95170E1F6E43A52C7B1ABEAE9DA7D40F1424B1"
+     FindType="FindByThumbprint"
+     FindValue="ED99D5D779C24269D384A68C639FE2534E185301"
+     StoreLocation="CurrentUser"
+     StoreName="My" />
   <ApplicationParameterFile Path="..\ApplicationParameters\Cloud.xml" />
+  <UpgradeDeployment Mode="Monitored" Enabled="true">
+    <Parameters FailureAction="Rollback" Force="True" />
+  </UpgradeDeployment>
 </PublishProfile>
